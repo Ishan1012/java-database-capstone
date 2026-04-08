@@ -1,66 +1,70 @@
-## Section 1: MySQL Relational Database Design
-The following tables handle structured data where data integrity and relationships are critical.
+# Smart Clinic Management System - Database Design
 
-### 1. Patients Table
-| Column | Data Type | Constraints |
-| :--- | :--- | :--- |
-| patient_id | BIGINT | PRIMARY KEY, AUTO_INCREMENT |
-| first_name | VARCHAR(50) | NOT NULL |
-| last_name | VARCHAR(50) | NOT NULL |
-| email | VARCHAR(100) | UNIQUE, NOT NULL |
-| date_of_birth | DATE | NOT NULL |
+## MySQL Database Design
+The relational database handles core entities where data integrity and relationships are critical.
 
-### 2. Doctors Table
-| Column | Data Type | Constraints |
-| :--- | :--- | :--- |
-| doctor_id | BIGINT | PRIMARY KEY, AUTO_INCREMENT |
-| name | VARCHAR(100) | NOT NULL |
-| specialty | VARCHAR(50) | NOT NULL |
-| email | VARCHAR(100) | UNIQUE, NOT NULL |
+### Table: admins
+- **id**: INT, Primary Key, Auto Increment
+- **username**: VARCHAR(50), Unique, Not Null
+- **password_hash**: VARCHAR(255), Not Null (encrypted)
+- **email**: VARCHAR(100), Unique
 
-### 3. Appointments Table
-| Column | Data Type | Constraints |
-| :--- | :--- | :--- |
-| appointment_id | BIGINT | PRIMARY KEY, AUTO_INCREMENT |
-| patient_id | BIGINT | FOREIGN KEY (Patients), NOT NULL |
-| doctor_id | BIGINT | FOREIGN KEY (Doctors), NOT NULL |
-| appointment_date | DATETIME | NOT NULL |
-| status | VARCHAR(20) | NOT NULL (e.g., PLANNED, COMPLETED) |
+### Table: doctors
+- **id**: INT, Primary Key, Auto Increment
+- **first_name**: VARCHAR(50), Not Null
+- **last_name**: VARCHAR(50), Not Null
+- **specialization**: VARCHAR(100)
+- **email**: VARCHAR(100), Unique
+- **phone**: VARCHAR(15)
 
-### 4. Admin Table
-| Column | Data Type | Constraints |
-| :--- | :--- | :--- |
-| admin_id | BIGINT | PRIMARY KEY, AUTO_INCREMENT |
-| username | VARCHAR(50) | UNIQUE, NOT NULL |
-| password | VARCHAR(255) | NOT NULL |
+### Table: patients
+- **id**: INT, Primary Key, Auto Increment
+- **first_name**: VARCHAR(50), Not Null
+- **last_name**: VARCHAR(50), Not Null
+- **date_of_birth**: DATE, Not Null
+- **email**: VARCHAR(100), Unique
+- **phone**: VARCHAR(15)
+
+### Table: appointments
+- **id**: INT, Primary Key, Auto Increment
+- **doctor_id**: INT, Foreign Key → doctors(id) ON DELETE CASCADE
+- **patient_id**: INT, Foreign Key → patients(id) ON DELETE CASCADE
+- **appointment_time**: DATETIME, Not Null
+- **status**: INT (0 = Scheduled, 1 = Completed, 2 = Cancelled)
+- **notes_ref_id**: VARCHAR(24) (Optional: Link to MongoDB document ID)
 
 ---
 
-## Section 2: MongoDB Document Collection Design
-We use **MongoDB** for **Prescriptions** because medical scripts vary in complexity. Some may have one medication, while others have multiple with specific dosages, which fits a flexible JSON structure better than a rigid table.
+## MongoDB Collection Design
+MongoDB stores the flexible, content-heavy data that doesn't require strict relational constraints.
 
-### Collection: `prescriptions`
+### Collection: prescriptions
+This collection stores detailed medical instructions and medication lists. We use MongoDB because the number of medications per visit varies wildly.
+
 **Example Document:**
 ```json
 {
-  "prescription_id": "64f1a2b3c4d5e6f7g8h9i0j1",
-  "appointment_id": 105,
-  "doctor_name": "Dr. Smith",
-  "patient_id": 50,
-  "date_issued": "2026-04-08",
+  "_id": "64abc123456",
+  "appointmentId": 101,
+  "patientId": 5,
+  "dateIssued": "2026-04-08T10:30:00Z",
   "medications": [
     {
       "name": "Amoxicillin",
       "dosage": "500mg",
-      "frequency": "Twice daily",
+      "frequency": "Three times daily",
       "duration": "7 days"
     },
     {
       "name": "Ibuprofen",
       "dosage": "200mg",
-      "frequency": "As needed for pain",
-      "duration": "3 days"
+      "frequency": "As needed for pain"
     }
   ],
-  "notes": "Patient should rest and drink plenty of fluids."
+  "vitals_at_visit": {
+    "blood_pressure": "120/80",
+    "weight_kg": 72.5
+  },
+  "tags": ["Urgent", "Follow-up Required"]
 }
+```
