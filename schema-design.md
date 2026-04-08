@@ -68,3 +68,18 @@ This collection stores detailed medical instructions and medication lists. We us
   "tags": ["Urgent", "Follow-up Required"]
 }
 ```
+
+### Collection: doctor_notes
+Used for free-form clinical observations and history.
+
+**Example Document:**
+
+```JSON
+{
+  "_id": "64def789012",
+  "appointmentId": 101,
+  "content": "Patient reports mild chest pain after exercise. EKG looks normal.",
+  "attachments": [
+    {"type": "image", "url": "s3://clinic-bucket/ekg_scan_101.jpg"}
+  ]
+}
