@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface PrescriptionRepository  {
+public interface PrescriptionRepository extends MongoRepository<Prescription, Long> {
 // 1. Extend MongoRepository:
 //    - The repository extends MongoRepository<Prescription, String>, which provides basic CRUD functionality for MongoDB.
 //    - This allows the repository to perform operations like save, delete, update, and find without needing to implement these methods manually.

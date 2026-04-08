@@ -1,6 +1,7 @@
 package com.project.back_end.services;
 
 import com.project.back_end.DTO.AppointmentDTO;
+import com.project.back_end.models.Appointment;
 import com.project.back_end.models.Patient;
 import com.project.back_end.repo.PatientRepository;
 import com.project.back_end.repo.AppointmentRepository;
@@ -116,8 +117,37 @@ public class PatientService {
 
     @Transactional(readOnly = true)
     public ResponseEntity<?> getPatientAppointment(String email) {
-        // Implementation converts models to DTOs
-        return ResponseEntity.ok(appointmentRepository.findByPatientEmail(email));
+        try {
+            // 1. Fetch the list of entities from the repository
+            List<Appointment> appointments = appointmentRepository.findByPatientEmail(email);
+
+            // 2. Map Entities to DTOs using Java Streams
+            List<AppointmentDTO> dtos = appointments.stream()
+                    .map(appointment -> {
+                        AppointmentDTO dto = new AppointmentDTO();
+                        dto.setId(appointment.getId());
+                        dto.setAppointmentTime(appointment.getAppointmentTime());
+                        dto.setStatus(appointment.getStatus());
+
+                        // Mapping nested doctor information
+                        if (appointment.getDoctor() != null) {
+                            dto.setDoctorName(appointment.getDoctor().getName());
+                            dto.setSpecialty(appointment.getDoctor().getSpecialty());
+                        }
+
+                        return dto;
+                    })
+                    .collect(Collectors.toList());
+
+            // 3. Return the list of DTOs
+            return ResponseEntity.ok(dtos);
+
+        } catch (Exception e) {
+            // Log the error for debugging
+            System.err.println("Error fetching appointments for " + email + ": " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Could not retrieve appointments.");
+        }
     }
 
     @Transactional(readOnly = true)

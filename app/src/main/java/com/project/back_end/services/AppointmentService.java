@@ -48,7 +48,7 @@ public class AppointmentService {
 //    - This method updates the status of an appointment by changing its value in the database.
 //    - It should be annotated with `@Transactional` to ensure the operation is executed in a single transaction.
 //    - Instruction: Add `@Transactional` before this method to ensure atomicity when updating appointment status.
-private final AppointmentRepository appointmentRepository;
+    private final AppointmentRepository appointmentRepository;
 
     public AppointmentService(AppointmentRepository appointmentRepository) {
         this.appointmentRepository = appointmentRepository;

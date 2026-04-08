@@ -74,26 +74,26 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 // 4. @Repository annotation:
 //    - The @Repository annotation marks this interface as a Spring Data JPA repository.
 //    - Spring Data JPA automatically implements this repository, providing the necessary CRUD functionality and custom queries defined in the interface.
+List<Appointment> findByDoctorId(Long doctorId);
+
+    // Used by DoctorService delete (renamed to match service call)
+    @Modifying
+    @Transactional
+    void deleteByDoctorId(Long doctorId);
+
+    // Used by PatientService
+    List<Appointment> findByPatientEmail(String email);
+
+    List<Appointment> findByPatientEmailAndStatus(String email, int status);
+
+    @Query("SELECT a FROM Appointment a WHERE a.patient.email = :email AND a.doctor.name LIKE %:doctorName%")
+    List<Appointment> findByPatientEmailAndDoctorNameContaining(@Param("email") String email, @Param("doctorName") String doctorName);
+
+    @Query("SELECT a FROM Appointment a WHERE a.patient.email = :email AND a.doctor.name LIKE %:doctorName% AND a.status = :status")
+    List<Appointment> findByPatientEmailAndDoctorNameContainingAndStatus(@Param("email") String email, @Param("doctorName") String doctorName, @Param("status") int status);
+
+    // Existing time-based methods
     List<Appointment> findByDoctorIdAndAppointmentTimeBetween(Long doctorId, LocalDateTime start, LocalDateTime end);
 
-    List<Appointment> findByDoctorIdAndPatient_NameContainingIgnoreCaseAndAppointmentTimeBetween(Long doctorId, String patientName, LocalDateTime start, LocalDateTime end);
-
-    @Modifying
-    @Transactional
-    void deleteAllByDoctorId(Long doctorId);
-
-    List<Appointment> findByPatientId(Long patientId);
-
-    List<Appointment> findByPatient_IdAndStatusOrderByAppointmentTimeAsc(Long patientId, int status);
-
-    @Query("SELECT a FROM Appointment a WHERE a.doctor.name LIKE %:doctorName% AND a.patient.id = :patientId")
-    List<Appointment> filterByDoctorNameAndPatientId(@Param("doctorName") String doctorName, @Param("patientId") Long patientId);
-
-    @Query("SELECT a FROM Appointment a WHERE a.doctor.name LIKE %:doctorName% AND a.patient.id = :patientId AND a.status = :status")
-    List<Appointment> filterByDoctorNameAndPatientIdAndStatus(@Param("doctorName") String doctorName, @Param("patientId") Long patientId, @Param("status") int status);
-
-    @Modifying
-    @Transactional
-    @Query("UPDATE Appointment a SET a.status = :status WHERE a.id = :id")
-    void updateStatus(@Param("status") int status, @Param("id") long id);
+    
 }

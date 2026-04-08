@@ -99,6 +99,7 @@ public class AppointmentDTO {
     private String patientAddress;
     private LocalDateTime appointmentTime;
     private int status;
+    private String specialty;
 
     // Derived custom fields
     private LocalDate appointmentDate;
@@ -135,28 +136,19 @@ public class AppointmentDTO {
     // Getters
     public Long getId() { return id; }
     public Long getDoctorId() { return doctorId; }
-    public String getDoctorName() { return doctorName; }
-    public Long getPatientId() { return patientId; }
     public String getPatientName() { return patientName; }
-    public String getPatientEmail() { return patientEmail; }
-    public String getPatientPhone() { return patientPhone; }
-    public String getPatientAddress() { return patientAddress; }
-    public LocalDateTime getAppointmentTime() { return appointmentTime; }
     public int getStatus() { return status; }
-    public LocalDate getAppointmentDate() { return appointmentDate; }
-    public LocalTime getAppointmentTimeOnly() { return appointmentTimeOnly; }
-    public LocalDateTime getEndTime() { return endTime; }
+    public LocalDateTime getAppointmentTime() { return appointmentTime; }
+    public String getDoctorName() { return doctorName; }
+    public String getSpecialty() { return specialty; }
 
     // Setters
     public void setId(Long id) { this.id = id; }
     public void setDoctorId(Long doctorId) { this.doctorId = doctorId; }
     public void setDoctorName(String doctorName) { this.doctorName = doctorName; }
-    public void setPatientId(Long patientId) { this.patientId = patientId; }
     public void setPatientName(String patientName) { this.patientName = patientName; }
-    public void setPatientEmail(String patientEmail) { this.patientEmail = patientEmail; }
-    public void setPatientPhone(String patientPhone) { this.patientPhone = patientPhone; }
-    public void setPatientAddress(String patientAddress) { this.patientAddress = patientAddress; }
     public void setStatus(int status) { this.status = status; }
+    public void setSpecialty(String specialty) { this.specialty = specialty; }
 
     // Custom setter for appointmentTime that also updates the derived fields
     public void setAppointmentTime(LocalDateTime appointmentTime) {
