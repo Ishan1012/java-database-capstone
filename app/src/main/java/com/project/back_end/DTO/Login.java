@@ -25,6 +25,35 @@ public class Login {
 //    - The 'setEmail(String email)' method sets the email value.
 //    - The 'getPassword()' method allows access to the password value.
 //    - The 'setPassword(String password)' method sets the password value.
+    private String email;
+    private String password;
 
+    // Default constructor (Relies on the default provided by Java)
+    public Login() {
+    }
+
+    // Constructor with fields (Optional, but good practice for object creation)
+    public Login(String email, String password) {
+        this.email = email;
+        this.password = password;
+    }
+
+    // Getters
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    // Setters
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
 }

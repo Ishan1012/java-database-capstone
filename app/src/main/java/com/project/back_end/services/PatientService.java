@@ -1,5 +1,20 @@
 package com.project.back_end.services;
 
+import com.project.back_end.DTO.AppointmentDTO;
+import com.project.back_end.models.Patient;
+import com.project.back_end.repo.PatientRepository;
+import com.project.back_end.repo.AppointmentRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Service
 public class PatientService {
 // 1. **Add @Service Annotation**:
 //    - The `@Service` annotation is used to mark this class as a Spring service component. 
@@ -52,7 +67,73 @@ public class PatientService {
 // 10. **Use of DTOs (Data Transfer Objects)**:
 //    - The service uses `AppointmentDTO` to transfer appointment-related data between layers. This ensures that sensitive or unnecessary data (e.g., password or private patient information) is not exposed in the response.
 //    - Instruction: Ensure that DTOs are used appropriately to limit the exposure of internal data and only send the relevant fields to the client.
+    private final PatientRepository patientRepository;
+    private final AppointmentRepository appointmentRepository;
+    private final TokenService tokenService;
 
+    public PatientService(PatientRepository patientRepository, AppointmentRepository appointmentRepository, TokenService tokenService) {
+        this.patientRepository = patientRepository;
+        this.appointmentRepository = appointmentRepository;
+        this.tokenService = tokenService;
+    }
 
+    @Transactional
+    public int createPatient(Patient patient) {
+        try {
+            patientRepository.save(patient);
+            return 1;
+        } catch (Exception e) {
+            System.err.println("Error saving patient: " + e.getMessage());
+            return 0;
+        }
+    }
 
+    public boolean isPatientUnique(String email, String phone) {
+        return patientRepository.findByEmail(email).isEmpty() && patientRepository.findByPhone(phone).isEmpty();
+    }
+
+    public ResponseEntity<?> validateLogin(String email, String password) {
+        try {
+            Optional<Patient> patient = patientRepository.findByEmail(email);
+            if (patient.isPresent() && patient.get().getPassword().equals(password)) {
+                return ResponseEntity.ok(Map.of("token", tokenService.generateToken(email)));
+            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    public ResponseEntity<?> getPatientDetails(String token) {
+        try {
+            String email = tokenService.extractEmail(token);
+            Optional<Patient> patient = patientRepository.findByEmail(email);
+            return patient.<ResponseEntity<?>>map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getPatientAppointment(String email) {
+        // Implementation converts models to DTOs
+        return ResponseEntity.ok(appointmentRepository.findByPatientEmail(email));
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> filterByCondition(String email, String condition) {
+        int status = condition.equalsIgnoreCase("past") ? 1 : 0;
+        return ResponseEntity.ok(appointmentRepository.findByPatientEmailAndStatus(email, status));
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> filterByDoctor(String email, String doctorName) {
+        return ResponseEntity.ok(appointmentRepository.findByPatientEmailAndDoctorNameContaining(email, doctorName));
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> filterByDoctorAndCondition(String email, String doctorName, String condition) {
+        int status = condition.equalsIgnoreCase("past") ? 1 : 0;
+        return ResponseEntity.ok(appointmentRepository.findByPatientEmailAndDoctorNameContainingAndStatus(email, doctorName, status));
+    }
 }

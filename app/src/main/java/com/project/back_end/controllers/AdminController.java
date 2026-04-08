@@ -1,6 +1,14 @@
 
 package com.project.back_end.controllers;
 
+import com.project.back_end.models.Admin;
+import com.project.back_end.services.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("${api.path}admin")
 public class AdminController {
 
 // 1. Set Up the Controller Class:
@@ -20,8 +28,17 @@ public class AdminController {
 //    - Accepts an `Admin` object in the request body, which contains login credentials.
 //    - Delegates authentication logic to the `validateAdmin` method in the service layer.
 //    - Returns a `ResponseEntity` with a `Map` containing login status or messages.
+    private final Service coreService;
 
+    @Autowired
+    public AdminController(Service coreService) {
+        this.coreService = coreService;
+    }
 
+    @PostMapping("/login")
+    public ResponseEntity<?> adminLogin(@RequestBody Admin admin) {
+        return coreService.validateAdmin(admin.getUsername(), admin.getPassword());
+    }
 
 }
 

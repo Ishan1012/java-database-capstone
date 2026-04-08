@@ -1,5 +1,17 @@
 package com.project.back_end.services;
 
+import com.project.back_end.repo.AdminRepository;
+import com.project.back_end.models.Admin;
+import com.project.back_end.models.Doctor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+@org.springframework.stereotype.Service
 public class Service {
 // 1. **@Service Annotation**
 // The @Service annotation marks this class as a service component in Spring. This allows Spring to automatically detect it through component scanning
@@ -61,6 +73,66 @@ public class Service {
 // - Depending on which filters (condition, doctor name) are provided, it delegates the filtering logic to PatientService.
 // - If no filters are provided, it retrieves all appointments for the patient.
 // This flexible method supports patient-specific querying and enhances user experience on the client side.
+    private final TokenService tokenService;
+    private final AdminRepository adminRepository;
+    private final DoctorService doctorService;
+    private final PatientService patientService;
 
+    public Service(TokenService tokenService, AdminRepository adminRepository, DoctorService doctorService, PatientService patientService) {
+        this.tokenService = tokenService;
+        this.adminRepository = adminRepository;
+        this.doctorService = doctorService;
+        this.patientService = patientService;
+    }
+
+    public boolean validateToken(String token, String role) {
+        return tokenService.validateToken(token, role);
+    }
+
+    public ResponseEntity<?> validateAdmin(String username, String password) {
+        try {
+            Optional<Admin> adminOpt = adminRepository.findByUsername(username);
+            if (adminOpt.isPresent() && adminOpt.get().getPassword().equals(password)) {
+                String token = tokenService.generateToken(username);
+                return ResponseEntity.ok(Map.of("token", token));
+            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error validating admin");
+        }
+    }
+
+    public List<Doctor> filterDoctor(String name, String specialty, String time) {
+        if (name != null && specialty != null && time != null) return doctorService.filterDoctorsByNameSpecilityandTime(name, specialty, time);
+        if (name != null && time != null) return doctorService.filterDoctorByNameAndTime(name, time);
+        if (specialty != null && time != null) return doctorService.filterDoctorByTimeAndSpecility(time, specialty);
+        if (name != null && specialty != null) return doctorService.filterDoctorByNameAndSpecility(name, specialty);
+        if (name != null) return doctorService.findDoctorByName(name);
+        if (specialty != null) return doctorService.filterDoctorBySpecility(specialty);
+        if (time != null) return doctorService.filterDoctorsByTime(time);
+
+        return doctorService.getDoctors();
+    }
+
+    public int validateAppointment(Long doctorId, String requestedTime) {
+        return doctorService.getDoctorAvailability(doctorId, requestedTime);
+    }
+
+    public boolean validatePatient(String email, String phone) {
+        return patientService.isPatientUnique(email, phone);
+    }
+
+    public ResponseEntity<?> validatePatientLogin(String email, String password) {
+        return patientService.validateLogin(email, password);
+    }
+
+    public ResponseEntity<?> filterPatient(String token, String condition, String doctorName) {
+        String email = tokenService.extractEmail(token);
+        if (condition != null && doctorName != null) return patientService.filterByDoctorAndCondition(email, doctorName, condition);
+        if (condition != null) return patientService.filterByCondition(email, condition);
+        if (doctorName != null) return patientService.filterByDoctor(email, doctorName);
+
+        return patientService.getPatientAppointment(email);
+    }
 
 }

@@ -51,3 +51,24 @@
 
    Catch any other errors, alert the user, and return a default empty result
 */
+const DoctorService = {
+    getAllDoctors: async () => {
+        const res = await fetch('/api/doctors', { headers: getAuthHeaders() });
+        return res.json();
+    },
+    addDoctor: async (doctorData) => {
+        const res = await fetch('/api/doctors', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(doctorData)
+        });
+        return res.json();
+    },
+    deleteDoctor: async (doctorId) => {
+        const res = await fetch(`/api/doctors/${doctorId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+        return res.ok;
+    }
+};

@@ -1,5 +1,15 @@
 package com.project.back_end.services;
 
+import com.project.back_end.models.Prescription;
+import com.project.back_end.repo.PrescriptionRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+import java.util.Map;
+import java.util.Optional;
+
+@Service
 public class PrescriptionService {
     
  // 1. **Add @Service Annotation**:
@@ -29,6 +39,36 @@ public class PrescriptionService {
 //    - Both methods (`savePrescription` and `getPrescription`) contain try-catch blocks to handle exceptions that may occur during database interaction.
 //    - If an error occurs, the method logs the error and returns an HTTP `500 Internal Server Error` response with a corresponding error message.
 //    - Instruction: Ensure that all potential exceptions are handled properly, and meaningful responses are returned to the client.
+    private final PrescriptionRepository prescriptionRepository;
 
+    public PrescriptionService(PrescriptionRepository prescriptionRepository) {
+        this.prescriptionRepository = prescriptionRepository;
+    }
+
+    public ResponseEntity<?> savePrescription(Prescription prescription) {
+        try {
+            if (prescriptionRepository.findByAppointmentId(prescription.getAppointmentId()).isPresent()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Prescription for this appointment already exists.");
+            }
+            prescriptionRepository.save(prescription);
+            return ResponseEntity.status(HttpStatus.CREATED).body("Prescription saved successfully.");
+        } catch (Exception e) {
+            System.err.println("Error saving prescription: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error saving prescription.");
+        }
+    }
+
+    public ResponseEntity<?> getPrescription(Long appointmentId) {
+        try {
+            Optional<Prescription> prescription = prescriptionRepository.findByAppointmentId(appointmentId);
+            if (prescription.isPresent()) {
+                return ResponseEntity.ok(Map.of("prescription", prescription.get()));
+            }
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No prescription found for this appointment.");
+        } catch (Exception e) {
+            System.err.println("Error fetching prescription: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching prescription.");
+        }
+    }
 
 }

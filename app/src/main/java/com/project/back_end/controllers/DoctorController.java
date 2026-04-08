@@ -1,6 +1,18 @@
 package com.project.back_end.controllers;
 
+import com.project.back_end.DTO.Login;
+import com.project.back_end.models.Doctor;
+import com.project.back_end.services.DoctorService;
+import com.project.back_end.services.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
+@RestController
+@RequestMapping("${api.path}doctor")
 public class DoctorController {
 
 // 1. Set Up the Controller Class:
@@ -56,6 +68,72 @@ public class DoctorController {
 //    - Handles HTTP GET requests to filter doctors based on name, time, and specialty.
 //    - Accepts `name`, `time`, and `speciality` as path variables.
 //    - Calls the shared `Service` to perform filtering logic and returns matching doctors in the response.
+    private final DoctorService doctorService;
+    private final Service coreService;
 
+    @Autowired
+    public DoctorController(DoctorService doctorService, Service coreService) {
+        this.doctorService = doctorService;
+        this.coreService = coreService;
+    }
+
+    @GetMapping("/availability/{user}/{doctorId}/{date}/{token}")
+    public ResponseEntity<?> getDoctorAvailability(@PathVariable String user, @PathVariable Long doctorId, @PathVariable String date, @PathVariable String token) {
+        if (!coreService.validateToken(token, user)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        int availability = doctorService.getDoctorAvailability(doctorId, date);
+        return ResponseEntity.ok(Map.of("availability", availability));
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getDoctor() {
+        return ResponseEntity.ok(Map.of("doctors", doctorService.getDoctors()));
+    }
+
+    @PostMapping("/{token}")
+    public ResponseEntity<?> saveDoctor(@RequestBody Doctor doctor, @PathVariable String token) {
+        if (!coreService.validateToken(token, "admin")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        int result = doctorService.saveDoctor(doctor);
+        if (result == 1) return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Doctor added"));
+        if (result == -1) return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "Doctor email exists"));
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> doctorLogin(@RequestBody Login login) {
+        String token = doctorService.validateDoctor(login.getEmail(), login.getPassword());
+        if (token != null) {
+            return ResponseEntity.ok(Map.of("token", token));
+        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+    }
+
+    @PutMapping("/{token}")
+    public ResponseEntity<?> updateDoctor(@RequestBody Doctor doctor, @PathVariable String token) {
+        if (!coreService.validateToken(token, "admin")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        int result = doctorService.updateDoctor(doctor);
+        if (result == 1) return ResponseEntity.ok(Map.of("message", "Doctor updated"));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Doctor not found"));
+    }
+
+    @DeleteMapping("/{id}/{token}")
+    public ResponseEntity<?> deleteDoctor(@PathVariable Long id, @PathVariable String token) {
+        if (!coreService.validateToken(token, "admin")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        int result = doctorService.deleteDoctor(id);
+        if (result == 1) return ResponseEntity.ok(Map.of("message", "Doctor deleted"));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Doctor not found"));
+    }
+
+    @GetMapping("/filter/{name}/{time}/{speciality}")
+    public ResponseEntity<?> filter(@PathVariable(required = false) String name, @PathVariable(required = false) String time, @PathVariable(required = false) String speciality) {
+        return ResponseEntity.ok(coreService.filterDoctor(name, speciality, time));
+    }
 
 }

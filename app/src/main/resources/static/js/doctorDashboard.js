@@ -52,3 +52,61 @@
     - Call renderContent() (assumes it sets up the UI layout)
     - Call loadAppointments() to display today's appointments by default
 */
+let allAppointments = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!localStorage.getItem('jwtToken')) window.location.href = '/';
+    allAppointments = await PatientService.getDoctorAppointments();
+    renderAppointments(allAppointments);
+});
+
+function renderAppointments(appointments) {
+    const container = document.getElementById('appointments-list');
+    container.innerHTML = '';
+    appointments.forEach(app => {
+        const dateStr = new Date(app.appointmentTime).toLocaleDateString();
+        container.innerHTML += `
+            <div class="card">
+                <h3>${app.patient.name}</h3>
+                <p><strong>Date:</strong> ${dateStr}</p>
+                <button class="btn-info" onclick="viewPrescriptions(${app.patient.id}, '${app.patient.name}')">View History</button>
+            </div>
+        `;
+    });
+}
+
+document.getElementById('searchPatient').addEventListener('input', filterApps);
+document.getElementById('filterDate').addEventListener('change', filterApps);
+
+function filterApps() {
+    const nameStr = document.getElementById('searchPatient').value.toLowerCase();
+    const dateStr = document.getElementById('filterDate').value;
+
+    const filtered = allAppointments.filter(app => {
+        const appDate = app.appointmentTime.split('T')[0];
+        const matchesName = app.patient.name.toLowerCase().includes(nameStr);
+        const matchesDate = dateStr === '' || appDate === dateStr;
+        return matchesName && matchesDate;
+    });
+    renderAppointments(filtered);
+}
+
+async function viewPrescriptions(patientId, patientName) {
+    const prescriptions = await PatientService.getPatientPrescriptions(patientId);
+    const content = document.getElementById('rx-content');
+
+    if(prescriptions.length === 0) {
+        content.innerHTML = `<p>No history found for ${patientName}.</p>`;
+    } else {
+        content.innerHTML = prescriptions.map(rx => `
+            <div style="border-bottom:1px solid #eee; margin-bottom:10px;">
+                <strong>Medication:</strong> ${rx.medication} <br>
+                <strong>Notes:</strong> ${rx.doctorNotes}
+            </div>
+        `).join('');
+    }
+    openModal('rxModal');
+}
+
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }

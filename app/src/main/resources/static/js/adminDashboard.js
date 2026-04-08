@@ -70,3 +70,62 @@
 
     If saving fails, show an error message
 */
+let allDoctors = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!localStorage.getItem('jwtToken')) window.location.href = '/';
+    allDoctors = await DoctorService.getAllDoctors();
+    renderDoctors(allDoctors);
+});
+
+function renderDoctors(doctors) {
+    const container = document.getElementById('doctors-list');
+    container.innerHTML = '';
+    doctors.forEach(doc => {
+        container.innerHTML += `
+            <div class="card">
+                <h3>${doc.name}</h3>
+                <p><strong>Specialty:</strong> ${doc.specialty}</p>
+                <button class="btn-danger" onclick="handleDelete(${doc.id})">Delete</button>
+            </div>
+        `;
+    });
+}
+
+document.getElementById('searchName').addEventListener('input', filterDoctors);
+document.getElementById('filterSpecialty').addEventListener('change', filterDoctors);
+
+function filterDoctors() {
+    const nameStr = document.getElementById('searchName').value.toLowerCase();
+    const specStr = document.getElementById('filterSpecialty').value;
+    const filtered = allDoctors.filter(doc =>
+        doc.name.toLowerCase().includes(nameStr) &&
+        (specStr === '' || doc.specialty === specStr)
+    );
+    renderDoctors(filtered);
+}
+
+document.getElementById('addDoctorForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newDoc = {
+        name: document.getElementById('docName').value,
+        specialty: document.getElementById('docSpecialty').value,
+        email: document.getElementById('docEmail').value,
+        password: document.getElementById('docPassword').value
+    };
+    await DoctorService.addDoctor(newDoc);
+    closeModal('addDoctorModal');
+    allDoctors = await DoctorService.getAllDoctors();
+    renderDoctors(allDoctors);
+});
+
+async function handleDelete(id) {
+    if(confirm('Delete this doctor?')) {
+        await DoctorService.deleteDoctor(id);
+        allDoctors = await DoctorService.getAllDoctors();
+        renderDoctors(allDoctors);
+    }
+}
+
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }

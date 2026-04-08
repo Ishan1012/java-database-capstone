@@ -1,5 +1,15 @@
 package com.project.back_end.services;
 
+import com.project.back_end.models.Doctor;
+import com.project.back_end.repo.DoctorRepository;
+import com.project.back_end.repo.AppointmentRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
 public class DoctorService {
 
 // 1. **Add @Service Annotation**:
@@ -33,7 +43,7 @@ public class DoctorService {
 
 // 7. **getDoctors Method**:
 //    - Fetches all doctors from the database. It is marked with `@Transactional` to ensure that the collection is properly loaded.
-//    - Instruction: Ensure that the collection is eagerly loaded, especially if dealing with lazy-loaded relationships (e.g., available times). 
+//    - Instruction: Ensure that the collection is eagerly loaded, especially if dealing with lazy-loaded relationships (e.g., available times).
 
 // 8. **deleteDoctor Method**:
 //    - Deletes a doctor from the system along with all appointments associated with that doctor.
@@ -87,6 +97,95 @@ public class DoctorService {
 //    - Filters all doctors based on their availability during a specific time period (AM/PM).
 //    - The method checks all doctors' available times and returns those available during the specified time period.
 //    - Instruction: Ensure proper filtering logic to handle AM/PM time periods.
+    private final DoctorRepository doctorRepository;
+    private final AppointmentRepository appointmentRepository;
+    private final TokenService tokenService;
 
-   
+    public DoctorService(DoctorRepository doctorRepository, AppointmentRepository appointmentRepository, TokenService tokenService) {
+        this.doctorRepository = doctorRepository;
+        this.appointmentRepository = appointmentRepository;
+        this.tokenService = tokenService;
+    }
+
+    @Transactional(readOnly = true)
+    public int getDoctorAvailability(Long doctorId, String requestedTime) {
+        Optional<Doctor> doctorOpt = doctorRepository.findById(doctorId);
+        if (doctorOpt.isEmpty()) return -1;
+
+        // Custom logic to check if requested time is in doctorOpt.get().getAvailableTimes()
+        // and NOT in appointmentRepository.findByDoctorIdAndDate()
+        boolean isAvailable = doctorOpt.get().getAvailableTimes().contains(requestedTime);
+        return isAvailable ? 1 : 0;
+    }
+
+    @Transactional
+    public int saveDoctor(Doctor doctor) {
+        try {
+            if (doctorRepository.findByEmail(doctor.getEmail()).isPresent()) {
+                return -1; // Conflict
+            }
+            doctorRepository.save(doctor);
+            return 1; // Success
+        } catch (Exception e) {
+            return 0; // Error
+        }
+    }
+
+    @Transactional
+    public int updateDoctor(Doctor doctor) {
+        if (!doctorRepository.existsById(doctor.getId())) return -1;
+        doctorRepository.save(doctor);
+        return 1;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Doctor> getDoctors() {
+        return doctorRepository.findAll();
+    }
+
+    @Transactional
+    public int deleteDoctor(Long id) {
+        if (!doctorRepository.existsById(id)) return -1;
+        appointmentRepository.deleteByDoctorId(id);
+        doctorRepository.deleteById(id);
+        return 1;
+    }
+
+    public String validateDoctor(String email, String password) {
+        Optional<Doctor> doc = doctorRepository.findByEmail(email);
+        if (doc.isPresent() && doc.get().getPassword().equals(password)) {
+            return tokenService.generateToken(email);
+        }
+        return null;
+    }
+
+    // --- Filtering Methods ---
+    @Transactional(readOnly = true)
+    public List<Doctor> findDoctorByName(String name) { return doctorRepository.findByNameContainingIgnoreCase(name); }
+
+    @Transactional(readOnly = true)
+    public List<Doctor> filterDoctorBySpecility(String specialty) { return doctorRepository.findBySpecialtyIgnoreCase(specialty); }
+
+    @Transactional(readOnly = true)
+    public List<Doctor> filterDoctorsByTime(String time) { return doctorRepository.findByAvailableTimesContaining(time); }
+
+    @Transactional(readOnly = true)
+    public List<Doctor> filterDoctorByNameAndSpecility(String name, String specialty) {
+        return doctorRepository.findByNameContainingIgnoreCaseAndSpecialtyIgnoreCase(name, specialty);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Doctor> filterDoctorByNameAndTime(String name, String time) {
+        return doctorRepository.findByNameContainingIgnoreCaseAndAvailableTimesContaining(name, time);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Doctor> filterDoctorByTimeAndSpecility(String time, String specialty) {
+        return doctorRepository.findByAvailableTimesContainingAndSpecialtyIgnoreCase(time, specialty);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Doctor> filterDoctorsByNameSpecilityandTime(String name, String specialty, String time) {
+        return doctorRepository.findByNameContainingIgnoreCaseAndSpecialtyIgnoreCaseAndAvailableTimesContaining(name, specialty, time);
+    }
 }

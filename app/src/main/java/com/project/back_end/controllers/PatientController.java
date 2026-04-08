@@ -1,5 +1,17 @@
 package com.project.back_end.controllers;
+import com.project.back_end.DTO.Login;
+import com.project.back_end.models.Patient;
+import com.project.back_end.services.PatientService;
+import com.project.back_end.services.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
+@RestController
+@RequestMapping("/patient")
 public class PatientController {
 
 // 1. Set Up the Controller Class:
@@ -45,7 +57,54 @@ public class PatientController {
 //    - Token must be valid for a `"patient"` role.
 //    - If valid, delegates filtering logic to the shared service and returns the filtered result.
 
+    private final PatientService patientService;
+    private final Service coreService;
 
+    @Autowired
+    public PatientController(PatientService patientService, Service coreService) {
+        this.patientService = patientService;
+        this.coreService = coreService;
+    }
+
+    @GetMapping("/{token}")
+    public ResponseEntity<?> getPatient(@PathVariable String token) {
+        if (!coreService.validateToken(token, "patient")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        return patientService.getPatientDetails(token);
+    }
+
+    @PostMapping
+    public ResponseEntity<?> createPatient(@RequestBody Patient patient) {
+        if (!coreService.validatePatient(patient.getEmail(), patient.getPhone())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "Email or Phone already exists"));
+        }
+        int result = patientService.createPatient(patient);
+        if (result == 1) return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "Patient registered successfully"));
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Error registering patient"));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Login login) {
+        return coreService.validatePatientLogin(login.getEmail(), login.getPassword());
+    }
+
+    @GetMapping("/{id}/{user}/{token}")
+    public ResponseEntity<?> getPatientAppointment(@PathVariable Long id, @PathVariable String user, @PathVariable String token) {
+        if (!coreService.validateToken(token, user)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        // Assuming your getPatientAppointment relies on email extracted from token or id
+        return patientService.getPatientAppointment(token); // Or pass extracted email
+    }
+
+    @GetMapping("/filter/{condition}/{name}/{token}")
+    public ResponseEntity<?> filterPatientAppointment(@PathVariable String condition, @PathVariable String name, @PathVariable String token) {
+        if (!coreService.validateToken(token, "patient")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+        return coreService.filterPatient(token, condition, name);
+    }
 
 }
 

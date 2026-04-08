@@ -106,4 +106,49 @@ with search, filter, and modal functionality.
     * Finish the structure by properly closing all tags.
 
  -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="../../static/assets/css/style.css">
+    <link rel="stylesheet" href="../../static/assets/css/adminDashboard.css">
+</head>
+<body>
+<header>
+    <h2>Admin Dashboard</h2>
+    <button onclick="logout()">Logout</button>
+</header>
 
+<div class="container">
+    <div class="controls">
+        <input type="text" id="searchName" placeholder="Search Doctor by Name...">
+        <select id="filterSpecialty">
+            <option value="">All Specialties</option>
+            <option value="Cardiology">Cardiology</option>
+            <option value="Pediatrics">Pediatrics</option>
+        </select>
+        <button class="btn-primary" onclick="openModal('addDoctorModal')">+ Add Doctor</button>
+    </div>
+
+    <div id="doctors-list" class="grid"></div>
+</div>
+
+<div id="addDoctorModal" class="modal">
+    <div class="modal-content">
+        <button class="close-modal" onclick="closeModal('addDoctorModal')">&times;</button>
+        <h3>Add New Doctor</h3>
+        <form id="addDoctorForm">
+            <input type="text" id="docName" placeholder="Full Name" required>
+            <input type="text" id="docSpecialty" placeholder="Specialty" required>
+            <input type="email" id="docEmail" placeholder="Email" required>
+            <input type="password" id="docPassword" placeholder="Temporary Password" required>
+            <button type="submit" class="btn-primary">Save Doctor</button>
+        </form>
+    </div>
+</div>
+
+<script src="../../static/js/services/index.js"></script>
+<script src="../../static/js/adminDashboard.js"></script>
+<script src="../../static/js/doctorDashboard.js"></script>
+</body>
+</html>

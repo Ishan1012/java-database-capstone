@@ -1,6 +1,14 @@
 package com.project.back_end.repo;
 
-public interface DoctorRepository {
+import com.project.back_end.models.Doctor;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface DoctorRepository extends JpaRepository<Doctor, Long> {
    // 1. Extend JpaRepository:
 //    - The repository extends JpaRepository<Doctor, Long>, which gives it basic CRUD functionality.
 //    - This allows the repository to perform operations like save, delete, update, and find without needing to implement these methods manually.
@@ -35,5 +43,18 @@ public interface DoctorRepository {
 // 3. @Repository annotation:
 //    - The @Repository annotation marks this interface as a Spring Data JPA repository.
 //    - Spring Data JPA automatically implements this repository, providing the necessary CRUD functionality and custom queries defined in the interface.
+    Optional<Doctor> findByEmail(String email);
 
+    List<Doctor> findByNameLike(String name);
+
+    List<Doctor> findByNameContainingIgnoreCaseAndSpecialtyIgnoreCase(String name, String specialty);
+
+    List<Doctor> findBySpecialtyIgnoreCase(String specialty);
+
+    // Additional methods based on your DoctorService requirements
+    List<Doctor> findByNameContainingIgnoreCase(String name);
+    List<Doctor> findByAvailableTimesContaining(String time);
+    List<Doctor> findByNameContainingIgnoreCaseAndAvailableTimesContaining(String name, String time);
+    List<Doctor> findByAvailableTimesContainingAndSpecialtyIgnoreCase(String time, String specialty);
+    List<Doctor> findByNameContainingIgnoreCaseAndSpecialtyIgnoreCaseAndAvailableTimesContaining(String name, String specialty, String time);
 }

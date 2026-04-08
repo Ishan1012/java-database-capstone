@@ -99,3 +99,38 @@ This file defines the Doctor Dashboard interface, allowing doctors to view and m
 
     * Properly close the `<body>` and `<html>` tags to complete the document.
  -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Doctor Dashboard</title>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/doctorDashboard.css">
+</head>
+<body>
+<header>
+    <h2>Doctor Dashboard</h2>
+    <button onclick="logout()">Logout</button>
+</header>
+
+<div class="container">
+    <div class="controls">
+        <input type="text" id="searchPatient" placeholder="Search by Patient Name...">
+        <input type="date" id="filterDate">
+    </div>
+
+    <div id="appointments-list" class="grid"></div>
+</div>
+
+<div id="rxModal" class="modal">
+    <div class="modal-content">
+        <button class="close-modal" onclick="closeModal('rxModal')">&times;</button>
+        <h3>Patient Prescriptions</h3>
+        <div id="rx-content"></div>
+    </div>
+</div>
+
+<script src="../../static/js/services/index.js"></script>
+<script src="../../static/js/services/patientServices.js"></script>
+<script src="../../static/js/doctorDashboard.js"></script>
+</body>
+</html>

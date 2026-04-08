@@ -1,5 +1,13 @@
 package com.project.back_end.services;
 
+import com.project.back_end.models.Appointment;
+import com.project.back_end.repo.AppointmentRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
 public class AppointmentService {
 // 1. **Add @Service Annotation**:
 //    - To indicate that this class is a service layer class for handling business logic.
@@ -40,6 +48,55 @@ public class AppointmentService {
 //    - This method updates the status of an appointment by changing its value in the database.
 //    - It should be annotated with `@Transactional` to ensure the operation is executed in a single transaction.
 //    - Instruction: Add `@Transactional` before this method to ensure atomicity when updating appointment status.
+private final AppointmentRepository appointmentRepository;
 
+    public AppointmentService(AppointmentRepository appointmentRepository) {
+        this.appointmentRepository = appointmentRepository;
+    }
 
+    @Transactional
+    public int bookAppointment(Appointment appointment) {
+        try {
+            appointmentRepository.save(appointment);
+            return 1;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    @Transactional
+    public String updateAppointment(Long id, Appointment updatedData, Long patientId) {
+        return appointmentRepository.findById(id).map(existing -> {
+            if (!existing.getPatient().getId().equals(patientId)) {
+                return "Unauthorized: Patient ID mismatch";
+            }
+            existing.setAppointmentTime(updatedData.getAppointmentTime());
+            appointmentRepository.save(existing);
+            return "Success";
+        }).orElse("Appointment not found");
+    }
+
+    @Transactional
+    public boolean cancelAppointment(Long appointmentId, Long patientId) {
+        return appointmentRepository.findById(appointmentId).map(appointment -> {
+            if (appointment.getPatient().getId().equals(patientId)) {
+                appointmentRepository.delete(appointment);
+                return true;
+            }
+            return false;
+        }).orElse(false);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Appointment> getAppointments(Long doctorId) {
+        return appointmentRepository.findByDoctorId(doctorId);
+    }
+
+    @Transactional
+    public void changeStatus(Long appointmentId, int newStatus) {
+        appointmentRepository.findById(appointmentId).ifPresent(appointment -> {
+            appointment.setStatus(newStatus);
+            appointmentRepository.save(appointment);
+        });
+    }
 }

@@ -56,3 +56,36 @@
     - Log the error to the console
     - Show a generic error message
 */
+async function login(username, password, role) {
+    try {
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password, role })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            localStorage.setItem('jwtToken', data.token);
+            localStorage.setItem('userRole', role);
+
+            window.location.href = role === 'ADMIN' ? '/admin/dashboard' : '/doctor/dashboard';
+        } else {
+            alert('Invalid credentials');
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+    }
+}
+
+function logout() {
+    localStorage.clear();
+    window.location.href = '/';
+}
+
+function getAuthHeaders() {
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`
+    };
+}
