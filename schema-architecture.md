@@ -1,5 +1,4 @@
 ```markdown
-# schema-architecture.md
 
 ## Section 1: Architecture Summary
 
