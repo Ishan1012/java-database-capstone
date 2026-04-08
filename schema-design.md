@@ -83,3 +83,4 @@ Used for free-form clinical observations and history.
     {"type": "image", "url": "s3://clinic-bucket/ekg_scan_101.jpg"}
   ]
 }
+```
